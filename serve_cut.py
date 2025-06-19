@@ -17,14 +17,17 @@ pose = mp.solutions.pose.Pose(static_image_mode=False,
                               min_tracking_confidence=0.5)
 
 # Criar uma pasta para salvar os vídeos dos saques se não existir
+input_dir = Path('input_videos')
 serve_dir = Path('serve')
 land_dir = Path('landmarks')
 os.makedirs(serve_dir, exist_ok=True)
 os.makedirs(land_dir, exist_ok=True)
 
 filename = 'myserve_1.mp4'
-cap = cv2.VideoCapture(serve_dir / filename)
+cap = cv2.VideoCapture(input_dir / filename)
 fps = int(cap.get(cv2.CAP_PROP_FPS))
+fourcc = cv2.VideoWriter_fourcc(*'mp4v') # Codec para salvar o vídeo
+total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
 # Deque para armazenar os frames e landmarks
 frames = deque(maxlen=fps * 4) 
@@ -36,20 +39,30 @@ min_visibility = 0.5
 # Inicilizar flags para identificar o saque
 condition1_met = condition2_met = condition3_met = False
 serve_count = 0
-
+out = None
+post_condition3_frames = 0 # Contador de frames após a condição 3 ser verificada
 current_frame = 0
+
+frameskip = 2 # Pular frames para acelerar o processamento
 while cap.isOpened():
     ret, frame = cap.read()
     current_frame += 1
-
+    if current_frame % frameskip != 0:
+        continue
+    
     # Reescalando o frame para melhorar o processamento
-    scale_percent = 30  
+    scale_percent = 20  
     width = int(frame.shape[1] * scale_percent / 100)
     height = int(frame.shape[0] * scale_percent / 100)
     dim = (width, height)
     frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
+    # Monitorando o progresso
+    os.system('clear')  # Limpa o terminal (use 'cls' no Windows)
+    completion_percentage = (current_frame / total_frames) * 100
+    print(f'Processando... {completion_percentage:.2f}% concluído ({current_frame}/{total_frames} frames)')
 
+    frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = pose.process(image)
 
@@ -71,11 +84,11 @@ while cap.isOpened():
         shoulder_visible = landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER].visibility > min_visibility
 
         ## Condição 1: Braço esquerdo acima do nariz
-        if wrist_visible and landmarks[mp_pose.PoseLandmark.LEFT_WRIST].y < landmarks[mp_pose.PoseLandmarks.NOSE].y:
+        if wrist_visible and landmarks[mp_pose.PoseLandmark.LEFT_WRIST].y < landmarks[mp_pose.PoseLandmark.NOSE].y:
             condition1_met = True
 
         ## Condição 2: Cotovelo direito acima do ombro direito (laçada do saque)
-        if condition1_met and elbow_visible and landmarks[mp.pose.PoseLandmark.RIGHT_ELBOW].y < landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER].y:
+        if condition1_met and elbow_visible and landmarks[mp_pose.PoseLandmark.RIGHT_ELBOW].y < landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER].y:
             condition2_met = True
 
         ## Condição 3: Cotovelo direito abaixo do ombro direito (finalização do saque)
@@ -83,12 +96,35 @@ while cap.isOpened():
             condition3_met = True
 
         if condition3_met:
+            post_condition3_frames += 1 
+
+        if condition3_met and out is None:
             serve_count += 1
             print(f'Saque detectado! Contagem: {serve_count}')
-            condition1_met = condition2_met = condition3_met = False
+            out = cv2.VideoWriter(
+                serve_dir / f'{filename.split(".")[0]}_{serve_count}.mp4',
+                               fourcc=fourcc,
+                               fps=fps,
+                               frameSize=(frame.shape[1], frame.shape[0]))
 
+        if out is not None:
+            if post_condition3_frames >= fps * 2: # espera 2 segundos após a condição 3
+                
+                # salva landmarks
+                with open(land_dir / f'{filename.split(".")[0]}_{serve_count}.pkl', 'wb') as f:
+                    pickle.dump(list(landmarks_frames), f)
 
-    frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+                while not len(frames) == 0:
+                    out.write(frames.popleft())
+                
+                out.release()
+                print(f'Vídeo {serve_count} salvo!')
+
+                # Reseta as condições
+                out = None
+                condition1_met = condition2_met = condition3_met = False
+                post_condition3_frames = 0
+
     cv2.imshow('Frame', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
