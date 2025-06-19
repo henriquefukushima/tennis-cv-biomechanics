@@ -29,6 +29,12 @@ fps = int(cap.get(cv2.CAP_PROP_FPS))
 while cap.isOpened():
     ret, frame = cap.read()
 
+    image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = pose.process(frame)
+
+    mp.solutions.drawing_utils.draw_landmarks(
+        frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+    
     frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
     cv2.imshow('Frame', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
