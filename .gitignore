@@ -1,0 +1,6 @@
+serve/*
+!serve/.gitkeep
+venv
+venv12
+.DS_Store
+__pycache__
