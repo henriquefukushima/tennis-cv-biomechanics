@@ -29,8 +29,14 @@ fps = int(cap.get(cv2.CAP_PROP_FPS))
 while cap.isOpened():
     ret, frame = cap.read()
 
+    scale_percent = 30  # Percentual de escala
+    width = int(frame.shape[1] * scale_percent / 100)
+    height = int(frame.shape[0] * scale_percent / 100)
+    dim = (width, height)
+    frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    results = pose.process(frame)
+    results = pose.process(image)
 
     mp.solutions.drawing_utils.draw_landmarks(
         frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
