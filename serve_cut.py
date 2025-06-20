@@ -7,6 +7,11 @@ import pickle
 from collections import deque
 from pathlib import Path
 
+def show_progress(curr, total):
+    pct = 100 * curr / total
+    # \r → go back to column-0; end='' so we *don’t* add a newline
+    print(f"\rProcessando… {pct:6.2f}% ({curr}/{total} frames)", end='', flush=True)
+
 # Inicialização do MediaPipe Pose
 mp_pose = mp.solutions.pose
 pose = mp.solutions.pose.Pose(static_image_mode=False,
@@ -46,10 +51,14 @@ current_frame = 0
 frameskip = 2 # Pular frames para acelerar o processamento
 while cap.isOpened():
     ret, frame = cap.read()
+    if not ret:
+        print("\nFim do vídeo ou erro ao ler o frame.")
+        break
+
     current_frame += 1
     if current_frame % frameskip != 0:
         continue
-    
+
     # Reescalando o frame para melhorar o processamento
     scale_percent = 20  
     width = int(frame.shape[1] * scale_percent / 100)
@@ -58,9 +67,7 @@ while cap.isOpened():
     frame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
     # Monitorando o progresso
-    os.system('clear')  # Limpa o terminal (use 'cls' no Windows)
-    completion_percentage = (current_frame / total_frames) * 100
-    print(f'Processando... {completion_percentage:.2f}% concluído ({current_frame}/{total_frames} frames)')
+    show_progress(current_frame, total_frames)
 
     frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -100,7 +107,7 @@ while cap.isOpened():
 
         if condition3_met and out is None:
             serve_count += 1
-            print(f'Saque detectado! Contagem: {serve_count}')
+            print(f'\nSaque detectado! Contagem: {serve_count}')
             out = cv2.VideoWriter(
                 serve_dir / f'{filename.split(".")[0]}_{serve_count}.mp4',
                                fourcc=fourcc,
@@ -118,7 +125,7 @@ while cap.isOpened():
                     out.write(frames.popleft())
                 
                 out.release()
-                print(f'Vídeo {serve_count} salvo!')
+                print(f'\nVídeo {serve_count} salvo!')
 
                 # Reseta as condições
                 out = None
