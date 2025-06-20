@@ -6,11 +6,14 @@ import csv
 import pickle
 from collections import deque
 from pathlib import Path
+from utils.logging_utils import show_progress
 
-def show_progress(curr, total):
-    pct = 100 * curr / total
-    # \r → go back to column-0; end='' so we *don’t* add a newline
-    print(f"\rProcessando… {pct:6.2f}% ({curr}/{total} frames)", end='', flush=True)
+#===== Configurações =====
+filename = 'myserve_1.mp4'
+scale_percent = 80  
+frameskip = 1   # Pular frames para reduzir a carga de processamento
+rotate = True  # Rotacionar o vídeo 90 graus no sentido horário
+#=========================
 
 # Inicialização do MediaPipe Pose
 mp_pose = mp.solutions.pose
@@ -28,7 +31,6 @@ land_dir = Path('landmarks')
 os.makedirs(serve_dir, exist_ok=True)
 os.makedirs(land_dir, exist_ok=True)
 
-filename = 'myserve_1.mp4'
 cap = cv2.VideoCapture(input_dir / filename)
 fps = int(cap.get(cv2.CAP_PROP_FPS))
 fourcc = cv2.VideoWriter_fourcc(*'mp4v') # Codec para salvar o vídeo
@@ -48,7 +50,6 @@ out = None
 post_condition3_frames = 0 # Contador de frames após a condição 3 ser verificada
 current_frame = 0
 
-frameskip = 2 # Pular frames para acelerar o processamento
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
@@ -56,11 +57,12 @@ while cap.isOpened():
         break
 
     current_frame += 1
+    # Pular frames conforme o frameskip
+    # Isso reduz a carga de processamento e acelera a detecção
     if current_frame % frameskip != 0:
         continue
 
     # Reescalando o frame para melhorar o processamento
-    scale_percent = 20  
     width = int(frame.shape[1] * scale_percent / 100)
     height = int(frame.shape[0] * scale_percent / 100)
     dim = (width, height)
@@ -69,7 +71,10 @@ while cap.isOpened():
     # Monitorando o progresso
     show_progress(current_frame, total_frames)
 
-    frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+    if rotate:
+        # Rotacionar o frame 90 graus no sentido horário
+        frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+    
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = pose.process(image)
 

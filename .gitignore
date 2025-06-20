@@ -1,9 +1,11 @@
 serve/*
 landmarks/*
 input_videos/*
+frames/*
 !serve/.gitkeep
 !landmarks/.gitkeep
 !input_videos/.gitkeep
+!frames/.gitkeep
 venv
 venv12
 .DS_Store
