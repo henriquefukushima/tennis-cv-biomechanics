@@ -9,10 +9,10 @@ from pathlib import Path
 from utils.logging_utils import show_progress
 
 #===== Configurações =====
-filename = 'myserve.mp4'
+filename = 'murray_serve.mp4'
 scale_percent = 80  
 frameskip = 1   # Pular frames para reduzir a carga de processamento
-rotate = True  # Rotacionar o vídeo 90 graus no sentido horário
+rotate = False  # Rotacionar o vídeo 90 graus no sentido horário
 #=========================
 
 # Inicialização do MediaPipe Pose

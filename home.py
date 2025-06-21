@@ -5,7 +5,10 @@ import pickle
 import cv2
 import os
 import pdb
-from utils.img_process_utils import hsv_cv2hsv, draw_shadows
+from scipy.spatial import distance
+from utils.img_process_utils import (hsv_cv2hsv,
+                                    draw_shadows,
+                                    draw_ball_shadow)  
 
 # ===== Configurações do Streamlit =====
 st.set_page_config(page_title="Análise de Saques no Vôlei", 
@@ -74,6 +77,8 @@ def load_data(video, video2):
     with open(ball_file2, 'rb') as f:
         ball2 = pickle.load(f)
 
+    # debug
+    print(f'ball_{video.split(".")[0]}.pkl')
     return landmarks, landmarks2, ball, ball2
 
 @st.cache_resource()
@@ -92,7 +97,7 @@ video_files.sort()
 video = st.sidebar.selectbox("Selecione o primeiro vídeo", video_files)
 video2 = st.sidebar.selectbox("Selecione o segundo vídeo", video_files, index=len(video_files) - 1)
 
-render_ball = st.checkbox("Exibir bola?")
+render_ball = st.checkbox("Exibir bola?", value=False, help="Exibe a trajetória da bola no vídeo. Pode ser pesado para vídeos longos.")
 
 body_parts = {
     "RIGHT UPPER": 16,
@@ -131,6 +136,10 @@ if not st.session_state["is_playing"]:
         frame1 = draw_shadows(frame1, lands_data, st.session_state.idx, body_parts[k], 15)
         frame2 = draw_shadows(frame2, landas_data2, st.session_state.idx2, body_parts[k], 15)
 
+    if render_ball:
+        frame1 = draw_ball_shadow(frame1, ball_data, st.session_state.idx)
+        frame2 = draw_ball_shadow(frame2, ball_data2, st.session_state.idx2)
+
     cont1.image(frame1, use_container_width=True)
     cont2.image(frame2, use_container_width=True)
 
@@ -150,6 +159,10 @@ while st.session_state["is_playing"]:
     for k in bp:
         frame1 = draw_shadows(frame1, lands_data, st.session_state.idx, body_parts[k], 15)
         frame2 = draw_shadows(frame2, landas_data2, st.session_state.idx2, body_parts[k], 15)
+
+    if render_ball:
+        frame1 = draw_ball_shadow(frame1, ball_data, st.session_state.idx)
+        frame2 = draw_ball_shadow(frame2, ball_data2, st.session_state.idx2)
 
     with ph1.container() as p:
         st.image(frame1, use_container_width=True)

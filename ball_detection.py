@@ -103,13 +103,13 @@ while cap.isOpened():
 
     for c in contours:
         (x,y), r = cv2.minEnclosingCircle(c)
-        if r > 5:
+        if r > 3 and y < 0.5 * frame.shape[0]:
             cv2.circle(frame, (int(x),int(y)), int(r), (0,255,0), 2)
-            conts += [(int(x), int(y))]
-    list_balls.append(conts)
+            conts += [(int(x),int(y))]
+    list_balls += [conts]
 
     out.write(frame)
-    cv2.imshow('Moving Ball Mask', moving_ball_mask)
+    #cv2.imshow('Moving Ball Mask', moving_ball_mask)
     #cv2.imshow('Overlay', overlay)
     cv2.imshow('Frame', frame)
 
