@@ -5,15 +5,19 @@ from pathlib import Path
 from utils.img_process_utils import hsv_cv2hsv
 
 # ===== Configurações =====
-filename = 'myserve_1.mp4'
+filename = 'myserve_2.mp4'
 
 # kyrgios.mp4
 #hsv_low = hsv_cv2hsv(60, 19, 60)
 #hsv_high = hsv_cv2hsv(80, 71, 100)
 
 # myserve.mp4
-hsv_low  = hsv_cv2hsv( 70, 40, 50)      # H ≈ 70 °, S > 40 %, V > 50 %
-hsv_high = hsv_cv2hsv(115,100,100)      # H ≈ 115 °, full Sat / Val
+hsv_low  = hsv_cv2hsv( 70, 40, 50) 
+hsv_high = hsv_cv2hsv(115,100,100)      
+
+# murray_serve.mp4
+#hsv_low  = hsv_cv2hsv(54, 85, 25)     
+#hsv_high = hsv_cv2hsv(60,100,85)     
 
 # ===== Parâmetros fixos =====
 INPUT_DIR = Path('input_videos')
@@ -39,6 +43,10 @@ height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 out_path = SERVE_DIR / f'{filename.split(".")[0]}_processed.mp4'
 out = cv2.VideoWriter(str(out_path), fourcc, fps, (width, height))
 # =============================
+
+# Definir região central no eixo X (ajuste as frações conforme necessário)
+x_center_min = int(width * 0.3)
+x_center_max = int(width * 0.7)
 
 while cap.isOpened():
     
@@ -83,6 +91,7 @@ while cap.isOpened():
     #cv2.imshow("Colour∧Motion", moving_ball_mask)
 
     # if nothing moved, skip expensive work
+    '''
     if cv2.countNonZero(moving_ball_mask) == 0:
         key = cv2.waitKey(1) & 0xFF            # still listen for keys
         if key == ord('q'):
@@ -94,24 +103,23 @@ while cap.isOpened():
             cv2.imwrite(str(FRAMES_DIR / f'frame_{idx}.png'), frame)
             cv2.imwrite(str(FRAMES_DIR / f'mask_{idx}.png'), mask)
             print(f"📸 frame_{idx}.png & mask_{idx}.png salvos!")
-        continue   
-    # --------------------------------------------------------------------
-    
+        continue  
+    '''    
     # Limpar máscara com contornos da bolinha de tênis
     contours, _ = cv2.findContours(moving_ball_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     conts = []
 
     for c in contours:
         (x,y), r = cv2.minEnclosingCircle(c)
-        if r > 3 and y < 0.5 * frame.shape[0]:
+        if r > 5 and y < 0.5 * frame.shape[0] and x_center_min <= x <= x_center_max: # filtra por tamanho e posição da detecção
             cv2.circle(frame, (int(x),int(y)), int(r), (0,255,0), 2)
             conts += [(int(x),int(y))]
     list_balls += [conts]
 
     out.write(frame)
-    #cv2.imshow('Moving Ball Mask', moving_ball_mask)
+    cv2.imshow('Moving Ball Mask', moving_ball_mask)
     #cv2.imshow('Overlay', overlay)
-    cv2.imshow('Frame', frame)
+    #cv2.imshow('Frame', frame)
 
     # --- Keyboard handling ----------------------------
     key = cv2.waitKey(1) & 0xFF

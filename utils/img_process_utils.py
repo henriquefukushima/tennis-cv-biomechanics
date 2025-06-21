@@ -38,6 +38,12 @@ def draw_ball_shadow(frame, ball, idx):
 
         bs0 = linepoints[i - 1]
         bs1 = linepoints[i]
+        
+        if len(bs0) > 0 and len(bs1) > 0:
+            p0 = bs0[0]
+            p1 = bs1[0]
+            cv2.line(frame, p0, p1, (255, 255, 30), thickness=thickness, lineType=cv2.LINE_AA)
+        '''
         if len(bs0) > 0 and len(bs1) > 0:
             for p0 in bs0:
                 min_dist = 10
@@ -48,5 +54,5 @@ def draw_ball_shadow(frame, ball, idx):
                         p1_min = p1
                 if p1_min is not None:
                     cv2.line(frame, p0, p1_min, (255, 255, 30), thickness=thickness)
-
+        '''
     return frame

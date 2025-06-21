@@ -11,7 +11,7 @@ from utils.img_process_utils import (hsv_cv2hsv,
                                     draw_ball_shadow)  
 
 # ===== Configurações do Streamlit =====
-st.set_page_config(page_title="Análise de Saques no Vôlei", 
+st.set_page_config(page_title="Análise de Saques de Tênis", 
                    layout="wide")
 
 # ====== Constantes e Variáveis Globais ======
