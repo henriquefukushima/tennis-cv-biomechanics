@@ -2,5 +2,5 @@ opencv-python
 mediapipe
 numpy
 pandas
-cv2
-pickle5
+streamlit
+plotly

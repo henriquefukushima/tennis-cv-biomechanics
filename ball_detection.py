@@ -5,18 +5,15 @@ from pathlib import Path
 from utils.img_process_utils import hsv_cv2hsv
 
 # ===== Configurações =====
-filename = 'myserve_landmarks.mp4'
+filename = 'myserve_1.mp4'
+
+# kyrgios.mp4
 #hsv_low = hsv_cv2hsv(60, 19, 60)
 #hsv_high = hsv_cv2hsv(80, 71, 100)
 
-#hsv_low = hsv_cv2hsv(140, 25, 40)
-#hsv_high = hsv_cv2hsv(80, 71, 90)
-# values you PASS to hsv_cv2hsv(h, s, v)  →  degrees / percent / percent
+# myserve.mp4
 hsv_low  = hsv_cv2hsv( 70, 40, 50)      # H ≈ 70 °, S > 40 %, V > 50 %
 hsv_high = hsv_cv2hsv(115,100,100)      # H ≈ 115 °, full Sat / Val
-
-#hsv_low  = hsv_cv2hsv(30, 55, 40)   # H 30°,  S >55 %, V >40 %
-#hsv_high = hsv_cv2hsv(55,100,100)   # H 55°,  S,V full
 
 # ===== Parâmetros fixos =====
 INPUT_DIR = Path('input_videos')
@@ -26,12 +23,22 @@ FRAMES_DIR = Path('frames')
 SERVE_DIR.mkdir(exist_ok=True)
 LAND_DIR.mkdir(exist_ok=True)
 FRAMES_DIR.mkdir(exist_ok=True)
-print(f"Processando vídeo: {INPUT_DIR / filename}")
+print(f"Processando vídeo: {SERVE_DIR / filename}")
 
 # ===== Inicialização do OpenCV =====
-cap = cv2.VideoCapture(INPUT_DIR / filename)
+cap = cv2.VideoCapture(SERVE_DIR / filename)
 paused = False
 prev_mask = None
+list_balls = []
+
+# ===== Configuração do vídeo para Salvar =====
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec para salvar o vídeo
+fps = int(cap.get(cv2.CAP_PROP_FPS))
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+out_path = SERVE_DIR / f'{filename.split(".")[0]}_processed.mp4'
+out = cv2.VideoWriter(str(out_path), fourcc, fps, (width, height))
+# =============================
 
 while cap.isOpened():
     
@@ -92,12 +99,16 @@ while cap.isOpened():
     
     # Limpar máscara com contornos da bolinha de tênis
     contours, _ = cv2.findContours(moving_ball_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    conts = []
 
     for c in contours:
         (x,y), r = cv2.minEnclosingCircle(c)
         if r > 5:
             cv2.circle(frame, (int(x),int(y)), int(r), (0,255,0), 2)
+            conts += [(int(x), int(y))]
+    list_balls.append(conts)
 
+    out.write(frame)
     cv2.imshow('Moving Ball Mask', moving_ball_mask)
     #cv2.imshow('Overlay', overlay)
     cv2.imshow('Frame', frame)
@@ -117,5 +128,11 @@ while cap.isOpened():
         # Pausa o vídeo
         paused = not paused
 
+# salva landmarks
+with open(LAND_DIR / f'ball_{filename.split(".")[0]}.pkl', 'wb') as f:
+    pickle.dump(list(list_balls), f)
+
 cap.release()
+out.release()
+print(f"\nVídeo processado e salvo em: {out_path}")
 cv2.destroyAllWindows()

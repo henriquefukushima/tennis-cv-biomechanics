@@ -9,7 +9,7 @@ from pathlib import Path
 from utils.logging_utils import show_progress
 
 #===== Configurações =====
-filename = 'myserve_1.mp4'
+filename = 'myserve.mp4'
 scale_percent = 80  
 frameskip = 1   # Pular frames para reduzir a carga de processamento
 rotate = True  # Rotacionar o vídeo 90 graus no sentido horário
@@ -123,7 +123,7 @@ while cap.isOpened():
             if post_condition3_frames >= fps * 2: # espera 2 segundos após a condição 3
                 
                 # salva landmarks
-                with open(land_dir / f'{filename.split(".")[0]}_{serve_count}.pkl', 'wb') as f:
+                with open(land_dir / f'landmarks_{filename.split(".")[0]}_{serve_count}.pkl', 'wb') as f:
                     pickle.dump(list(landmarks_frames), f)
 
                 while not len(frames) == 0:
