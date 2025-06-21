@@ -1,28 +1,6 @@
-'''
 import numpy as np
-
-def hsv_cv2hsv(hsv = [0, 0, 0]):
-
-    """
-    Converte uma lista HSV (Hue, Saturation, Value) para o formato HSV do OpenCV.
-
-    Args:
-        hsv (list): Lista contendo os valores de Hue, Saturation e Value.
-
-    Returns:
-        numpy.ndarray: Imagem em formato HSV do OpenCV.
-    """
-
-    # Hue entre 0 e 179
-    hsv[0] = int(hsv[0] * 179 / 360)
-
-    # Saturation e Value entre 0 e 255
-    hsv[1] = int(hsv[1] * 255 / 100)
-    hsv[2] = int(hsv[2] * 255 / 100)
-
-    return np.array(hsv, dtype=np.uint8)
-'''
-import numpy as np
+import pdb
+import cv2 
 
 def hsv_cv2hsv(h, s, v):
     """
@@ -38,3 +16,14 @@ def hsv_cv2hsv(h, s, v):
         int(s / 100 * 255),       # Sat: 0-100% → 0-255
         int(v / 100 * 255)        # Val: 0-100% → 0-255
     ], dtype=np.uint8)
+
+def draw_shadows(frame, landmarks, idx, bp, len_):
+    idx0 = max(idx - len_, 0)
+    h, w, _ = frame.shape
+    line_points = [(int(i.landmark[bp].x * w), int(i.landmark[bp].y * h)) for i in landmarks[idx0: idx]]
+
+    for i in range(1, len(line_points)):
+        thickness = int(np.sqrt(20 / float(i + 1)) * 2.5)
+        cv2.line(frame, line_points[i - 1], line_points[i], (255, 255, 30), thickness=thickness, lineType=cv2.LINE_AA)
+
+    return frame

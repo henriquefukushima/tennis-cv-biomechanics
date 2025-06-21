@@ -1,8 +1,11 @@
+# ===== Importando bibliotecas =====
 import streamlit as st
 from pathlib import Path
 import pickle
 import cv2
 import os
+import pdb
+from utils.img_process_utils import hsv_cv2hsv, draw_shadows
 
 # ===== Configurações do Streamlit =====
 st.set_page_config(page_title="Análise de Saques no Vôlei", 
@@ -112,6 +115,7 @@ cont2 = ph2.container()
 ph3 = col3.empty()
 cont3 = ph3.container()
 
+# manual
 if not st.session_state["is_playing"]:
     cap[1].set(cv2.CAP_PROP_POS_FRAMES, st.session_state.idx)
     cap[2].set(cv2.CAP_PROP_POS_FRAMES, st.session_state.idx2)
@@ -122,6 +126,10 @@ if not st.session_state["is_playing"]:
     h2, w2, _ = frame2.shape
     frame1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB)
     frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2RGB)
+
+    for k in bp:
+        frame1 = draw_shadows(frame1, lands_data, st.session_state.idx, body_parts[k], 15)
+        frame2 = draw_shadows(frame2, landas_data2, st.session_state.idx2, body_parts[k], 15)
 
     cont1.image(frame1, use_container_width=True)
     cont2.image(frame2, use_container_width=True)
@@ -139,6 +147,10 @@ while st.session_state["is_playing"]:
     frame1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB)
     frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2RGB)
     
+    for k in bp:
+        frame1 = draw_shadows(frame1, lands_data, st.session_state.idx, body_parts[k], 15)
+        frame2 = draw_shadows(frame2, landas_data2, st.session_state.idx2, body_parts[k], 15)
+
     with ph1.container() as p:
         st.image(frame1, use_container_width=True)
     with ph2.container() as p:
